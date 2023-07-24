@@ -1,0 +1,1676 @@
+---
+title: "Dupeyron Wallace 2023 Betta Data Analysis"
+author: "Kelly Wallace"
+date: "July 2023"
+output: html_document
+---
+
+#This R code is affiliated with the Dupeyron & Wallace publication in the journal "Fishes". Please feel free to contact the corresponding author (Wallace) for questions.
+
+#First, get packages
+```{r}
+library(dplyr)
+library(ggplot2)
+library(viridis)
+library(stringr)
+library(broom)
+library(cowlogdata)
+library(readr)
+library(EnvStats)
+library(factoextra)
+library(viridis)
+library(coin)
+library(rstatix)
+```
+
+#get dataframes, combine into a master dataframe, and identify winners. Note the path to file is the path to the folder that has all individual score sheets for that assay. 
+#NOTE If you want to use the raw behavior data file, you can skip this chunk. You do need the folder with each individual score sheet further below if you want to show behavior over time segements within an assay.
+```{r}
+cldata(pathtofile ="PATH TO FILE", outputdataname ="dfmirror", outputzonename ="mirrorzones", factor = FALSE)
+colnames(dfmirror) <- paste(colnames(dfmirror),"mirror",sep="_")
+names(dfmirror)[names(dfmirror) == 'file_name_mirror'] <- 'name'
+
+cldata(pathtofile ="PATH TO FILE", outputdataname ="dfmirrorbehav", outputzonename ="mirrorbehavzones", factor = FALSE)
+colnames(dfmirrorbehav) <- paste(colnames(dfmirrorbehav),"mirrorbehav",sep="_")
+names(dfmirrorbehav)[names(dfmirrorbehav) == 'file_name_mirrorbehav'] <- 'name'
+
+cldata(pathtofile ="PATH TO FILE", outputdataname ="dfnov", outputzonename ="novelobjectzones", factor = FALSE)
+colnames(dfnov) <- paste(colnames(dfnov),"nov",sep="_")
+names(dfnov)[names(dfnov) == 'file_name_nov'] <- 'name'
+
+dfnov$object_total_prop_nov <- dfnov$object_prop_nov + dfnov$object_wall_prop_nov
+
+cldata(pathtofile ="PATH TO FILE", outputdataname ="dfscoto", outputzonename ="scotozones", factor = FALSE)
+colnames(dfscoto) <- paste(colnames(dfscoto),"scoto",sep="_")
+names(dfscoto)[names(dfscoto) == 'file_name_scoto'] <- 'name'
+
+dfscoto$total_black_prop_scoto <- dfscoto$center_black_prop_scoto + dfscoto$wall_black_prop_scoto
+
+cldata(pathtofile ="PATH TO FILE", outputdataname ="dfse1", outputzonename ="se1zones", factor = FALSE)
+colnames(dfse1) <- paste(colnames(dfse1),"SE1",sep="_")
+names(dfse1)[names(dfse1) == 'file_name_SE1'] <- 'name'
+
+cldata(pathtofile ="PATH TO FILE", outputdataname ="dfse2", outputzonename ="se2zones", factor = FALSE)
+colnames(dfse2) <- paste(colnames(dfse2),"SE2",sep="_")
+names(dfse2)[names(dfse2) == 'file_name_SE2'] <- 'name'
+
+cldata(pathtofile ="PATH TO FILE", outputdataname ="dfse3", outputzonename ="se3zones", factor = FALSE)
+colnames(dfse3) <- paste(colnames(dfse3),"SE3",sep="_")
+names(dfse3)[names(dfse3) == 'file_name_SE3'] <- 'name'
+
+cldata(pathtofile ="PATH TO FILE", outputdataname ="dfse4", outputzonename ="se4zones", factor = FALSE)
+colnames(dfse4) <- paste(colnames(dfse4),"SE4",sep="_")
+names(dfse4)[names(dfse4) == 'file_name_SE4'] <- 'name'
+
+cldata(pathtofile ="PATH TO FILE", outputdataname ="dfse5", outputzonename ="se5zones", factor = FALSE)
+colnames(dfse5) <- paste(colnames(dfse5),"SE5",sep="_")
+names(dfse5)[names(dfse5) == 'file_name_SE5'] <- 'name'
+
+
+for (i in 1:nrow(dfmirror)){
+  origname<-dfmirror$name[i]
+newname<- strsplit(as.character(origname), split = "_")[[1]][1]  
+  dfmirror$name[i]<-newname}
+i<-1
+
+for (i in 1:nrow(dfmirrorbehav)){
+  origname<-dfmirrorbehav$name[i]
+newname<- strsplit(as.character(origname), split = "_")[[1]][1]  
+  dfmirrorbehav$name[i]<-newname}
+i<-1
+
+for (i in 1:nrow(dfnov)){
+  origname<-dfnov$name[i]
+newname<- strsplit(as.character(origname), split = "_")[[1]][1]  
+  dfnov$name[i]<-newname}
+i<-1
+
+for (i in 1:nrow(dfscoto)){
+  origname<-dfscoto$name[i]
+newname<- strsplit(as.character(origname), split = "_")[[1]][1]  
+  dfscoto$name[i]<-newname}
+i<-1
+
+for (i in 1:nrow(dfse1)){
+  origname<-dfse1$name[i]
+newname<- strsplit(as.character(origname), split = "_")[[1]][1]  
+  dfse1$name[i]<-newname}
+i<-1
+
+for (i in 1:nrow(dfse2)){
+  origname<-dfse2$name[i]
+newname<- strsplit(as.character(origname), split = "_")[[1]][1]  
+  dfse2$name[i]<-newname}
+i<-1
+
+for (i in 1:nrow(dfse3)){
+  origname<-dfse3$name[i]
+newname<- strsplit(as.character(origname), split = "_")[[1]][1]  
+  dfse3$name[i]<-newname}
+i<-1
+
+for (i in 1:nrow(dfse4)){
+  origname<-dfse4$name[i]
+newname<- strsplit(as.character(origname), split = "_")[[1]][1]  
+  dfse4$name[i]<-newname}
+i<-1
+
+for (i in 1:nrow(dfse5)){
+  origname<-dfse5$name[i]
+newname<- strsplit(as.character(origname), split = "_")[[1]][1]  
+  dfse5$name[i]<-newname}
+i<-1
+
+fishinfo<-read.csv("PATH TO FILE WITH FISH INFORMATION")
+
+dfbrain<-read.csv("PATH TO FILE WITH CELL COUNTS")
+
+dfbrain<-dfbrain %>%
+  group_by(name) %>%
+  summarize(mean_dm3 = mean(dm3, na.rm = TRUE), mean_dlv1 = mean(dlv1, na.rm = TRUE), mean_vv = mean(vv, na.rm = TRUE))
+
+dffull<- left_join(fishinfo, dfmirror, by = "name")
+dffull<- left_join(dffull, dfmirrorbehav, by = "name")
+dffull<- left_join(dffull, dfnov, by = "name")
+dffull<- left_join(dffull, dfscoto, by = "name")
+dffull<- left_join(dffull, dfse1, by = "name")
+dffull<- left_join(dffull, dfse2, by = "name")
+dffull<- left_join(dffull, dfse3, by = "name")
+dffull<- left_join(dffull, dfse4, by = "name")
+dffull<- left_join(dffull, dfse5, by = "name")
+dffull<- left_join(dffull, dfbrain, by = "name")
+
+
+
+#determining winner in social exposures (winner was determined using gill flaring of 20% or more)
+uniquepairlist<-unique(dffull$SE1_pair)
+dffull$se1result<-NA
+i<-1
+for (i in 1:length(uniquepairlist)){
+  pair<-uniquepairlist[i]
+  temp<-dffull %>% filter(SE1_pair == pair)
+  comp1naprop<-temp$gill_covered_display_prop_SE1[1]
+  comp1name<-temp$name[1]
+  comp2naprop<-temp$gill_covered_display_prop_SE1[2]
+  comp2name<-temp$name[2]
+  margin<-round(comp1naprop-comp2naprop, 5)
+  
+  if(margin < -0.2){
+    dffull[dffull$name == comp1name,]$se1result<-"loser"
+    dffull[dffull$name == comp2name,]$se1result<-"winner"}
+  
+  if(margin >=0.2){
+    dffull[dffull$name == comp1name,]$se1result<-"winner"
+    dffull[dffull$name == comp2name,]$se1result<-"loser"}
+  
+  if(between(margin, -.2, .2)== TRUE){
+    dffull[dffull$name == comp1name,]$se1result<-"tie"
+    dffull[dffull$name == comp2name,]$se1result<-"tie"}}
+
+
+dffull$se2result<-NA
+i<-1
+for (i in 1:length(uniquepairlist)){
+  pair<-uniquepairlist[i]
+  temp<-dffull %>% filter(SE1_pair == pair)
+  comp1naprop<-temp$gill_covered_display_prop_SE2[1]
+  comp1name<-temp$name[1]
+  comp2naprop<-temp$gill_covered_display_prop_SE2[2]
+  comp2name<-temp$name[2]
+  margin<-round(comp1naprop-comp2naprop, 5)
+  
+  if(margin < -0.2){
+    dffull[dffull$name == comp1name,]$se2result<-"loser"
+    dffull[dffull$name == comp2name,]$se2result<-"winner"}
+  
+  if(margin >=0.2){
+    dffull[dffull$name == comp1name,]$se2result<-"winner"
+    dffull[dffull$name == comp2name,]$se2result<-"loser"}
+  
+  if(between(margin, -.2, .2)== TRUE){
+    dffull[dffull$name == comp1name,]$se2result<-"tie"
+    dffull[dffull$name == comp2name,]$se2result<-"tie"}}
+
+
+dffull$se3result<-NA
+i<-1
+for (i in 1:length(uniquepairlist)){
+  pair<-uniquepairlist[i]
+  temp<-dffull %>% filter(SE1_pair == pair)
+  comp1naprop<-temp$gill_covered_display_prop_SE3[1]
+  comp1name<-temp$name[1]
+  comp2naprop<-temp$gill_covered_display_prop_SE3[2]
+  comp2name<-temp$name[2]
+  margin<-round(comp1naprop-comp2naprop, 5)
+  
+  if(margin < -0.2){
+    dffull[dffull$name == comp1name,]$se3result<-"loser"
+    dffull[dffull$name == comp2name,]$se3result<-"winner"}
+  
+  if(margin >=0.2){
+    dffull[dffull$name == comp1name,]$se3result<-"winner"
+    dffull[dffull$name == comp2name,]$se3result<-"loser"}
+
+  if(between(margin, -.2, .2)== TRUE){
+    dffull[dffull$name == comp1name,]$se3result<-"tie"
+    dffull[dffull$name == comp2name,]$se3result<-"tie"}}
+
+
+dffull$se4result<-NA
+i<-1
+for (i in 1:length(uniquepairlist)){
+  pair<-uniquepairlist[i]
+  temp<-dffull %>% filter(SE1_pair == pair)
+  comp1naprop<-temp$gill_covered_display_prop_SE4[1]
+  comp1name<-temp$name[1]
+  comp2naprop<-temp$gill_covered_display_prop_SE4[2]
+  comp2name<-temp$name[2]
+  margin<-round(comp1naprop-comp2naprop, 5)
+  
+  if(margin < -0.2){
+    dffull[dffull$name == comp1name,]$se4result<-"loser"
+    dffull[dffull$name == comp2name,]$se4result<-"winner"}
+  
+  if(margin >=0.2){
+    dffull[dffull$name == comp1name,]$se4result<-"winner"
+    dffull[dffull$name == comp2name,]$se4result<-"loser"}
+  
+  if(between(margin, -.2, .2)== TRUE){
+    dffull[dffull$name == comp1name,]$se4result<-"tie"
+    dffull[dffull$name == comp2name,]$se4result<-"tie"}}
+
+uniquepairlist<-unique(dffull$SE5_pair)
+dffull$se5result<-NA
+i<-1
+for (i in 1:length(uniquepairlist)){
+  pair<-uniquepairlist[i]
+  temp<-dffull %>% filter(SE5_pair == pair)
+  comp1naprop<-temp$gill_covered_display_prop_SE5[1]
+  comp1name<-temp$name[1]
+  comp2naprop<-temp$gill_covered_display_prop_SE5[2]
+  comp2name<-temp$name[2]
+  margin<-round(comp1naprop-comp2naprop, 5)
+  
+  if(margin < -0.2){
+    dffull[dffull$name == comp1name,]$se5result<-"loser"
+    dffull[dffull$name == comp2name,]$se5result<-"winner"}
+  
+  if(margin >=0.2){
+    dffull[dffull$name == comp1name,]$se5result<-"winner"
+    dffull[dffull$name == comp2name,]$se5result<-"loser"}
+  
+  if(between(margin, -.2, .2)== TRUE){
+    dffull[dffull$name == comp1name,]$se5result<-"tie"
+    dffull[dffull$name == comp2name,]$se5result<-"tie"}
+}
+
+
+#determining relative size for each fish for SE1
+uniquepairlist<-unique(dffull$SE1_pair)
+dffull$SE1relativesize<-NA
+i<-1
+for (i in 1:length(uniquepairlist)){
+  pair<-uniquepairlist[i]
+  temp<-dffull %>% filter(SE1_pair == pair)
+  comp1size<-temp$standard_length[1]
+  comp1name<-temp$name[1]
+  comp2size<-temp$standard_length[2]
+  comp2name<-temp$name[2]
+  comp1relativesize<-round(comp1size-comp2size, 5)
+  dffull[dffull$name == comp1name,]$SE1relativesize<-comp1relativesize
+  comp2relativesize<-round(comp2size-comp1size, 5)
+  dffull[dffull$name == comp2name,]$SE1relativesize<-comp2relativesize}
+
+
+```
+
+#pie graph for each assay (and statistics to see that scoto/mirror behavior was significantly from chance)
+```{r}
+#NOV
+tempprops<-c(mean(dfnov$far_object_prop_nov)*100, 
+             mean(dfnov$object_prop_nov)*100, 
+             mean(dfnov$object_wall_prop_nov)*100,
+             mean(dfnov$far_object_wall_prop_nov)*100)
+tempprops_names<-c(paste("away from object",round(mean(dfnov$far_object_prop_nov)*100)), 
+                   paste("near object",round(mean(dfnov$object_prop_nov)*100)), 
+                   paste("near object WALL",round(mean(dfnov$object_wall_prop_nov)*100)), 
+                   paste("away from object WALL",round(mean(dfnov$far_object_wall_prop_nov)*100)))
+pie(tempprops,tempprops_names, main = "NOV", col = viridis(4))
+
+#NOV standard deviation (far is just 1-object so it's the same number)
+tempnov<-dfnov %>% select(object_wall_prop_nov, object_prop_nov)
+tempnov<-tempnov %>% mutate(sum = object_wall_prop_nov + object_prop_nov)
+sd(tempnov$sum)*100
+
+
+#SCOTO
+tempprops<-c(mean(dfscoto$center_white_prop_scoto)*100, 
+             mean(dfscoto$center_black_prop_scoto)*100, 
+             mean(dfscoto$wall_black_prop_scoto)*100, 
+             mean(dfscoto$wall_white_prop_scoto)*100)
+tempprops_names<-c(paste("center_white",round(mean(dfscoto$center_white_prop_scoto)*100)),
+                   paste("center_black",round(mean(dfscoto$center_black_prop_scoto)*100)),
+                   paste("wall_black",round(mean(dfscoto$wall_black_prop_scoto)*100)), 
+                   paste("wall white",round(mean(dfscoto$wall_white_prop_scoto)*100)))
+pie(tempprops,tempprops_names, main = "SCOTO", col = magma(4))
+
+
+temp<-dfscoto %>% select(center_white_prop_scoto, wall_white_prop_scoto, center_black_prop_scoto, wall_black_prop_scoto)
+temp<-temp %>% mutate(total_black = (center_black_prop_scoto + wall_black_prop_scoto)*100)
+
+shapiro.test(temp$total_black) #if shapiro is NOT significant you can use t test
+ test<-wilcox.test(temp$total_black, mu = 50, alternative = "two.sided")
+ pval<-test$p.value
+ print(paste("preference for total black scoto above 50% chance? p val (one sample two sided wilcox) = ", pval))
+ wilcoxeffsize<- temp %>% wilcox_effsize(total_black ~ 1, mu = 50)
+ print(wilcoxeffsize)
+ 
+#SCOTO standard deviation (black is just 1-white so it's the same number)
+tempscoto<-dfscoto %>% select(center_white_prop_scoto, wall_white_prop_scoto)
+tempscoto<-tempscoto %>% mutate(sum = center_white_prop_scoto + wall_white_prop_scoto)
+sd(tempscoto$sum)*100 
+ 
+
+#Mirror location
+tempprops<-c(mean(dfmirror$upper_prop_mirror)*100, 
+             mean(dfmirror$middle_prop_mirror)*100, 
+             mean(dfmirror$mirror_prop_mirror)*100)
+tempprops_names<-c(paste("upper (away)",round(mean(dfmirror$upper_prop_mirror)*100)),
+                   paste("middle",round(mean(dfmirror$middle_prop_mirror)*100)),
+                   paste("mirror",round(mean(dfmirror$mirror_prop_mirror)*100)))
+pie(tempprops,tempprops_names, main = "MIRROR", col = plasma(3))
+
+temp<-dfmirror %>% select(mirror_prop_mirror)
+temp$mirror_prop_mirror<-temp$mirror_prop_mirror*100
+shapiro.test(temp$mirror_prop_mirror) #if shapiro is NOT significant you can use t test
+ test<-t.test(temp$mirror_prop_mirror, mu = 33, alternative = "two.sided")
+ pval<-test$p.value
+ print(paste("preference for mirror more than 33? p val (one sample t test) = ", pval))
+ teffsize<- temp %>% cohens_d(mirror_prop_mirror ~ 1, mu = 33)
+ print(teffsize)
+ 
+ #mirror standard deviation
+sd(dfmirror$mirror_prop_mirror)*100 
+sd(dfmirror$middle_prop_mirror)*100
+sd(dfmirror$upper_prop_mirror)*100 
+
+```
+
+#specific comparisons between select behaviors in each NOV, SCOTO, MIRROR, and SE1. Mirror predicts SE1 but the others don't
+```{r}
+complist<-c("object_total_prop_nov", "total_black_prop_scoto", "mirror_prop_mirror", "gill_covered_display_prop_SE1", "n_a_prop_SE1", "standard_length")
+#went with total black for scoto instead of center white because center white had a dramatic outlier
+
+i<-1
+j<-1
+
+for (i in 1:length(complist)) {
+      for (j in 1:length(complist)) {
+        if(j != i){
+        measure1 <- complist[i]
+        measure2 <- complist[j]
+        temp <- dffull %>% select(complist[i], complist[j])
+
+            colnames(temp) <- c("measure1", "measure2")
+            temp$measure1 <- as.character(temp$measure1)
+            temp <- temp[temp$measure1 != "Inf", ]
+            temp$measure1 <- as.numeric(as.character(temp$measure1))
+            temp$measure2 <- as.character(temp$measure2)
+            temp <- temp[temp$measure2 != "Inf", ]
+            temp$measure2 <- as.numeric(as.character(temp$measure2))
+            mod <- lm(temp$measure2 ~ temp$measure1)
+            p_value <- summary(mod)$coefficients[8]
+            print(paste(measure1, measure2, "p value = ", 
+              round(p_value, 4)))
+
+     p <- ggplot(temp, aes(measure1, measure2)) + 
+     geom_point(size = 4) + geom_smooth(method = "lm", 
+     se = FALSE, colour = "black") + theme(text = element_text(size = 10)) + 
+     labs(x = measure1, y = measure2) + theme_classic() + 
+     annotate(geom = "text", label = paste("p value = ", 
+     round(p_value, 4)), x = -Inf, y = Inf, 
+     hjust = 0, vjust = 1)
+     plot(p)}}}
+
+
+#getting graph just of mirror by SE1 NA (ONE MINUS)
+mod <- lm(dffull$mirror_prop_mirror ~ dffull$n_a_prop_SE1)
+print(summary(mod))
+  p <- ggplot(dffull, aes((1-n_a_prop_SE1), mirror_prop_mirror)) + 
+     geom_point(size = 6, aes(col = se1result)) + geom_smooth(method = "lm", 
+     se = FALSE, colour = "black") + theme(text = element_text(size = 10)) + 
+     geom_point(shape = 1,size = 6,colour = "black")+
+     labs(x = "1-n_a_prop_SE1", y = "mirror_prop_mirror") + theme_classic() + 
+     scale_color_manual(values = c("darkslategray", "lightsteelblue3", "turquoise"))
+     #annotate(geom = "text", label = paste("p value = 0.0055 pre bonferroni"), x = -Inf, y = Inf, hjust = 0, vjust = 1)
+     plot(p)
+
+#getting graph just of mirror by SE1 gill flaring
+mod <- lm(dffull$mirror_prop_mirror ~ dffull$gill_covered_display_prop_SE1)
+print(summary(mod))
+  p <- ggplot(dffull, aes(gill_covered_display_prop_SE1, mirror_prop_mirror)) + 
+     geom_point(size = 6, aes(col = se1result)) + geom_smooth(method = "lm", 
+     se = FALSE, colour = "black") + theme(text = element_text(size = 10)) + 
+     geom_point(shape = 1,size = 6,colour = "black")+
+     labs(x = "gill_covered_display_prop_SE1", y = "mirror_prop_mirror") + theme_classic() +
+     scale_color_manual(values = c("darkslategray", "lightsteelblue3", "turquoise"))
+     #annotate(geom = "text", label = paste("p value = 0.0056 pre bonferroni"), x = -Inf, y = Inf, hjust = 0, vjust = 1)
+     plot(p)
+     
+     
+     
+     
+#COMPARISONS OF COLOR MORPHS     
+
+dftemp<-dffull %>% select(color, object_total_prop_nov)
+ dftemp<-na.omit(dftemp)
+ dftemp$color<-as.factor(dftemp$color)
+ shapiro.test(dftemp$object_total_prop_nov)#if shapiro is NOT significant you can use t test
+ test<-aov(object_total_prop_nov ~ color,
+  data = dftemp)
+ summary(test)
+ pval<-summary(test)[[1]][["Pr(>F)"]][[1]]
+p<- ggplot(dftemp, aes(x=color, y=object_total_prop_nov)) +
+    geom_boxplot(lwd=1, fill = viridis(5))+
+    geom_dotplot(binaxis='y', stackdir='center', dotsize=1)+
+   theme_classic()+
+  ggtitle(paste("object_total_prop_nov by color  p value= ", round(pval, 4)))+
+   labs(x= "color",y="object_total_prop_nov") + theme(axis.text.y = element_text(size = 14)) + theme(axis.text.x = element_text(size = 14)) +    stat_n_text()
+ plot(p)
+ 
+ 
+ dftemp<-dffull %>% select(color, total_black_prop_scoto)
+ dftemp<-na.omit(dftemp)
+ dftemp$color<-as.factor(dftemp$color)
+ shapiro.test(dftemp$total_black_prop_scoto)#if shapiro is NOT significant you can use t test
+ test<-aov(total_black_prop_scoto ~ color,
+  data = dftemp)
+ summary(test)
+ pval<-summary(test)[[1]][["Pr(>F)"]][[1]]
+p<- ggplot(dftemp, aes(x=color, y=total_black_prop_scoto)) +
+    geom_boxplot(lwd=1, fill = viridis(5))+
+    geom_dotplot(binaxis='y', stackdir='center', dotsize=1)+
+   theme_classic()+
+  ggtitle(paste("total_black_prop_scoto by color  p value= ", round(pval, 4)))+
+   labs(x= "color",y="total_black_prop_scoto") + theme(axis.text.y = element_text(size = 14)) + theme(axis.text.x = element_text(size = 14)) +    stat_n_text()
+ plot(p)
+ 
+ 
+ dftemp<-dffull %>% select(color, mirror_prop_mirror)
+ dftemp<-na.omit(dftemp)
+ dftemp$color<-as.factor(dftemp$color)
+ shapiro.test(dftemp$mirror_prop_mirror)#if shapiro is NOT significant you can use t test
+ test<-aov(mirror_prop_mirror ~ color,
+  data = dftemp)
+ summary(test)
+ pval<-summary(test)[[1]][["Pr(>F)"]][[1]]
+p<- ggplot(dftemp, aes(x=color, y=mirror_prop_mirror)) +
+    geom_boxplot(lwd=1, fill = viridis(5))+
+    geom_dotplot(binaxis='y', stackdir='center', dotsize=1)+
+   theme_classic()+
+  ggtitle(paste("mirror_prop_mirror by color  p value= ", round(pval, 4)))+
+   labs(x= "color",y="mirror_prop_mirror") + theme(axis.text.y = element_text(size = 14)) + theme(axis.text.x = element_text(size = 14)) +    stat_n_text()
+ plot(p)
+ 
+ 
+ #running the color one more time only comparing the two color morphs that had more than one individual
+ 
+ dftemp<-dffull %>% select(color, object_total_prop_nov)
+ dftemp<-na.omit(dftemp)
+ dftemp$color<-as.factor(dftemp$color)
+ dftemp<-dftemp %>% filter(color == "BRP" | color == "RED")
+ shapiro.test(dftemp$object_total_prop_nov) #if shapiro is NOT significant you can use t test
+ test<-t.test(object_total_prop_nov ~ color, data = dftemp)
+ pval<-test$p.value
+ print(paste("red vs brp in  object_total_prop_nov= ", pval))
+ 
+ dftemp<-dffull %>% select(color, total_black_prop_scoto)
+ dftemp<-na.omit(dftemp)
+ dftemp$color<-as.factor(dftemp$color)
+ dftemp<-dftemp %>% filter(color == "BRP" | color == "RED")
+ shapiro.test(dftemp$total_black_prop_scoto) #if shapiro is NOT significant you can use t test
+ test<-wilcox.test(total_black_prop_scoto ~ color, data = dftemp)
+ pval<-test$p.value
+ print(paste("red vs brp in  total_black_prop_scoto= ", pval))
+ 
+ 
+ dftemp<-dffull %>% select(color, mirror_prop_mirror)
+ dftemp<-na.omit(dftemp)
+ dftemp$color<-as.factor(dftemp$color)
+ dftemp<-dftemp %>% filter(color == "BRP" | color == "RED")
+ shapiro.test(dftemp$mirror_prop_mirror) #if shapiro is NOT significant you can use t test
+ test<-t.test(mirror_prop_mirror ~ color, data = dftemp)
+ pval<-test$p.value
+ print(paste("red vs brp in  mirror_prop_mirror= ", pval))
+
+ 
+
+
+```
+
+#do winners and losers differ in the other SE1 behaviors, or in size, or in color? yes in some
+```{r}
+
+#gill flaring winner vs loser PROOF OF CONCEPT
+ dftemp<-dffull %>% select(se1result, gill_covered_display_prop_SE1)
+ dftemp[dftemp$se1result == "tie",]$se1result<-NA
+ dftemp<-na.omit(dftemp)
+ dftemp$se1result<-as.factor(dftemp$se1result)
+ shapiro.test(dftemp$gill_covered_display_prop_SE1) #if shapiro is NOT significant you can use t test
+ test<-t.test(gill_covered_display_prop_SE1~se1result, data = dftemp)
+ pval<-test$p.value
+dftemp<-dffull %>% select(se1result, gill_covered_display_prop_SE1)
+p<- ggplot(dftemp, aes(x=se1result, y=gill_covered_display_prop_SE1)) +
+    geom_boxplot(lwd=1, fill = c("skyblue4", "skyblue", "paleturquoise"))+
+    geom_dotplot(binaxis='y', stackdir='center', dotsize=1)+
+   theme_classic()+
+  ggtitle(paste("winner vs loser only (no tie) p value= ", round(pval, 4)))+
+   labs(x= "se1result",y="gill_covered_display_prop_SE1") + theme(axis.text.y = element_text(size = 14)) + theme(axis.text.x = element_text(size = 14)) +    stat_n_text()
+ plot(p)
+ 
+ 
+ 
+ #n_a comparing winners and losers
+ dftemp<-dffull %>% select(se1result, n_a_prop_SE1)
+ dftemp[dftemp$se1result == "tie",]$se1result<-NA
+ dftemp<-na.omit(dftemp)
+ dftemp$se1result<-as.factor(dftemp$se1result)
+ shapiro.test(dftemp$n_a_prop_SE1) #if shapiro is NOT significant you can use t test
+ test<-wilcox.test(n_a_prop_SE1~se1result, data = dftemp)
+ pval<-test$p.value
+  wilcoxeffsize<- dftemp %>% wilcox_effsize(n_a_prop_SE1~se1result)
+ print(wilcoxeffsize)
+ 
+dftemp<-dffull %>% select(se1result, n_a_prop_SE1)
+p<- ggplot(dftemp, aes(x=se1result, y=n_a_prop_SE1)) +
+    geom_boxplot(lwd=1, fill = c("skyblue4", "skyblue", "paleturquoise"))+
+    geom_dotplot(binaxis='y', stackdir='center', dotsize=1)+
+   theme_classic()+
+  ggtitle(paste("winner vs loser only (no tie) p value= ", round(pval, 4)))+
+   labs(x= "se1result",y="n_a_prop_SE1") + theme(axis.text.y = element_text(size = 14)) + theme(axis.text.x = element_text(size = 14)) +    stat_n_text()
+ plot(p)
+
+
+#ramming biting winner vs loser comparison p value NOT including ties - NOT SIG
+ dftemp<-dffull %>% select(se1result, ramming_biting_prop_SE1)
+ dftemp[dftemp$se1result == "tie",]$se1result<-NA
+ dftemp<-na.omit(dftemp)
+ dftemp$se1result<-as.factor(dftemp$se1result)
+ shapiro.test(dftemp$ramming_biting_prop_SE1) #if shapiro is NOT significant you can use t test
+ test<-wilcox.test(ramming_biting_prop_SE1~se1result, data = dftemp)
+ pval<-test$p.value
+dftemp<-dffull %>% select(se1result, ramming_biting_prop_SE1)
+p<- ggplot(dftemp, aes(x=se1result, y=ramming_biting_prop_SE1)) +
+    geom_boxplot(lwd=1, fill = c("skyblue4", "skyblue", "paleturquoise"))+
+    geom_dotplot(binaxis='y', stackdir='center', dotsize=1)+
+   theme_classic()+
+  ggtitle(paste("winner vs loser only (no tie) p value= ", round(pval, 4)))+
+   labs(x= "se1result",y="ramming_biting_prop_SE1") + theme(axis.text.y = element_text(size = 14)) + theme(axis.text.x = element_text(size = 14)) +    stat_n_text()
+ plot(p)
+ 
+#tail beat winner vs loser comparison p value NOT including ties - NOT SIG
+ dftemp<-dffull %>% select(se1result, tail_beat_prop_SE1)
+ dftemp[dftemp$se1result == "tie",]$se1result<-NA
+ dftemp<-na.omit(dftemp)
+ dftemp$se1result<-as.factor(dftemp$se1result)
+ shapiro.test(dftemp$tail_beat_prop_SE1) #if shapiro is NOT significant you can use t test
+ test<-wilcox.test(tail_beat_prop_SE1~se1result, data = dftemp)
+ pval<-test$p.value
+dftemp<-dffull %>% select(se1result, tail_beat_prop_SE1)
+p<- ggplot(dftemp, aes(x=se1result, y=tail_beat_prop_SE1)) +
+    geom_boxplot(lwd=1, fill = c("skyblue4", "skyblue", "paleturquoise"))+
+    geom_dotplot(binaxis='y', stackdir='center', dotsize=1)+
+   theme_classic()+
+  ggtitle(paste("winner vs loser only (no tie) p value= ", round(pval, 4)))+
+   labs(x= "se1result",y="tail_beat_prop_SE1") + theme(axis.text.y = element_text(size = 14)) + theme(axis.text.x = element_text(size = 14)) +    stat_n_text()
+ plot(p) 
+ 
+ 
+ 
+#lateral swim winner vs loser comparison p value NOT including ties - NOT SIG
+ dftemp<-dffull %>% select(se1result, lateral_swimming_prop_SE1)
+ dftemp[dftemp$se1result == "tie",]$se1result<-NA
+ dftemp<-na.omit(dftemp)
+ dftemp$se1result<-as.factor(dftemp$se1result)
+ shapiro.test(dftemp$lateral_swimming_prop_SE1) #if shapiro is NOT significant you can use t test
+ test<-wilcox.test(lateral_swimming_prop_SE1~se1result, data = dftemp)
+ pval<-test$p.value
+dftemp<-dffull %>% select(se1result, lateral_swimming_prop_SE1)
+p<- ggplot(dftemp, aes(x=se1result, y=lateral_swimming_prop_SE1)) +
+    geom_boxplot(lwd=1, fill = c("skyblue4", "skyblue", "paleturquoise"))+
+    geom_dotplot(binaxis='y', stackdir='center', dotsize=1)+
+   theme_classic()+
+  ggtitle(paste("winner vs loser only (no tie) p value= ", round(pval, 4)))+
+   labs(x= "se1result",y="lateral_swimming_prop_SE1") + theme(axis.text.y = element_text(size = 14)) + theme(axis.text.x = element_text(size = 14)) +    stat_n_text()
+ plot(p)  
+ 
+ #surface breathing winner vs loser comparison p value NOT including ties - NOT SIG
+ dftemp<-dffull %>% select(se1result, surface_breathing_prop_SE1)
+ dftemp[dftemp$se1result == "tie",]$se1result<-NA
+ dftemp<-na.omit(dftemp)
+ dftemp$se1result<-as.factor(dftemp$se1result)
+ shapiro.test(dftemp$surface_breathing_prop_SE1) #if shapiro is NOT significant you can use t test
+ test<-wilcox.test(surface_breathing_prop_SE1~se1result, data = dftemp)
+ pval<-test$p.value
+dftemp<-dffull %>% select(se1result, surface_breathing_prop_SE1)
+p<- ggplot(dftemp, aes(x=se1result, y=surface_breathing_prop_SE1)) +
+    geom_boxplot(lwd=1, fill = c("skyblue4", "skyblue", "paleturquoise"))+
+    geom_dotplot(binaxis='y', stackdir='center', dotsize=1)+
+   theme_classic()+
+  ggtitle(paste("winner vs loser only (no tie) p value= ", round(pval, 4)))+
+   labs(x= "se1result",y="surface_breathing_prop_SE1") + theme(axis.text.y = element_text(size = 14)) + theme(axis.text.x = element_text(size = 14)) +    stat_n_text()
+ plot(p)
+
+#relativesize winner vs loser comparison p value NOT including ties - cannot do stats on this because relative size is inverse between pairs, so just for the graph
+ dftemp<-dffull %>% select(se1result, SE1relativesize)
+ dftemp[dftemp$se1result == "tie",]$se1result<-NA
+ dftemp<-na.omit(dftemp)
+ dftemp$se1result<-as.factor(dftemp$se1result)
+dftemp<-dffull %>% select(se1result, SE1relativesize)
+p<- ggplot(dftemp, aes(x=se1result, y=SE1relativesize)) +
+    geom_boxplot(lwd=1, fill = c("skyblue4", "skyblue", "paleturquoise"))+
+    geom_dotplot(binaxis='y', stackdir='center', dotsize=1)+
+   theme_classic()+
+   labs(x= "se1result",y="SE1relativesize") + theme(axis.text.y = element_text(size = 14)) + theme(axis.text.x = element_text(size = 14)) +    stat_n_text()+
+  geom_hline(yintercept=0,linetype=2, color = "gray80")
+ plot(p) 
+ 
+  #RELATIVE SIZE - is winner more likely than chance to be the larger fish? chi squared test
+ dftemp$sizecat<-dftemp$SE1relativesize
+ dftemp$sizecat[dftemp$SE1relativesize >0]<-"larger"
+ dftemp$sizecat[dftemp$SE1relativesize <0]<-"smaller"
+ dftemptable<-table(dftemp$se1result, dftemp$sizecat)
+ test<-chisq.test(dftemptable)
+ #chi squared effect size calculated by hand
+  sqrt((9*9)/24)
+ 
+ 
+ 
+ 
+
+ #COLOR winner vs loser comparison p value NOT including ties, just looking at BRP and RED
+ dftemp<-dffull %>% select(se1result, color)
+ dftemp<-dftemp %>% filter(color == "BRP" | color == "RED")
+ dftemp[dftemp$se1result == "tie",]$se1result<-NA
+ dftemp<-na.omit(dftemp)
+ dftemp$se1result<-as.factor(dftemp$se1result)
+ dftemp$se1result<-as.factor(dftemp$se1result)
+ dftemptable<-table(dftemp$se1result, dftemp$color)
+ test<-chisq.test(dftemptable)
+ pval<-test$p.value
+p<- ggplot(dftemp) +
+  aes(x = se1result, fill = color) +
+  geom_bar(position = "fill")+
+  theme_classic()+
+  scale_fill_manual(values = c("dodgerblue4", "tomato3"))+
+  ggtitle(paste("winner vs loser only (no tie) p value= ", round(pval, 4)))
+ plot(p) 
+
+
+```
+
+#do NOV/SCOTO/MIRROR selected behaviors differ between winners and losers?
+```{r}
+
+#OBJECT TOTAL PROP BY WINNER VS LOSER
+dftemp<-dffull %>% select(se1result, object_total_prop_nov)
+ dftemp[dftemp$se1result == "tie",]$se1result<-NA
+ dftemp<-na.omit(dftemp)
+ dftemp$se1result<-as.factor(dftemp$se1result)
+ shapiro.test(dftemp$object_total_prop_nov)#if shapiro is NOT significant you can use t test
+ test<-t.test(object_total_prop_nov~se1result, data = dftemp)
+ pval<-test$p.value
+dftemp<-dffull %>% select(se1result, object_total_prop_nov)
+p<- ggplot(dftemp, aes(x=se1result, y=object_total_prop_nov)) +
+    geom_boxplot(lwd=1, fill = c("skyblue4", "skyblue", "paleturquoise"))+
+    geom_dotplot(binaxis='y', stackdir='center', dotsize=1)+
+   theme_classic()+
+  ggtitle(paste("winner vs loser only (no tie) p value= ", round(pval, 4)))+
+   labs(x= "se1result",y="object_total_prop_nov") + theme(axis.text.y = element_text(size = 14)) + theme(axis.text.x = element_text(size = 14)) +    stat_n_text()
+ plot(p)
+ 
+ 
+#WALL BLACK BY WINNER VS LOSER
+dftemp<-dffull %>% select(se1result, total_black_prop_scoto)
+ dftemp[dftemp$se1result == "tie",]$se1result<-NA
+ dftemp<-na.omit(dftemp)
+ dftemp$se1result<-as.factor(dftemp$se1result)
+ shapiro.test(dftemp$total_black_prop_scoto)#if shapiro is NOT significant you can use t test
+ test<-t.test(total_black_prop_scoto~se1result, data = dftemp)
+ pval<-test$p.value
+dftemp<-dffull %>% select(se1result, total_black_prop_scoto)
+p<- ggplot(dftemp, aes(x=se1result, y=total_black_prop_scoto)) +
+    geom_boxplot(lwd=1, fill = c("skyblue4", "skyblue", "paleturquoise"))+
+    geom_dotplot(binaxis='y', stackdir='center', dotsize=1)+
+   theme_classic()+
+  ggtitle(paste("winner vs loser only (no tie) p value= ", round(pval, 4)))+
+   labs(x= "se1result",y="total_black_prop_scoto") + theme(axis.text.y = element_text(size = 14)) + theme(axis.text.x = element_text(size = 14)) +    stat_n_text()
+ plot(p)
+ 
+ 
+ #MIRROR BY WINNER VS LOSER
+dftemp<-dffull %>% select(se1result, mirror_prop_mirror)
+ dftemp[dftemp$se1result == "tie",]$se1result<-NA
+ dftemp<-na.omit(dftemp)
+ dftemp$se1result<-as.factor(dftemp$se1result)
+ shapiro.test(dftemp$mirror_prop_mirror)#if shapiro is NOT significant you can use t test
+ test<-t.test(mirror_prop_mirror~se1result, data = dftemp)
+ pval<-test$p.value
+dftemp<-dffull %>% select(se1result, mirror_prop_mirror)
+p<- ggplot(dftemp, aes(x=se1result, y=mirror_prop_mirror)) +
+    geom_boxplot(lwd=1, fill = c("skyblue4", "skyblue", "paleturquoise"))+
+    geom_dotplot(binaxis='y', stackdir='center', dotsize=1)+
+   theme_classic()+
+  ggtitle(paste("winner vs loser only (no tie) p value= ", round(pval, 4)))+
+   labs(x= "se1result",y="mirror_prop_mirror") + theme(axis.text.y = element_text(size = 14)) + theme(axis.text.x = element_text(size = 14)) +    stat_n_text()
+ plot(p)
+
+```
+
+#was winner in SE1 more likely than chance to be winner in SE2/SE3/SE4? yes!
+```{r}
+ dftemp<-dffull %>% select(se1result, se2result, name)
+ dftemp[dftemp$se1result == "tie",]$se1result<-NA
+ dftemp[dftemp$se2result == "tie",]$se2result<-NA
+ dftemp<-na.omit(dftemp)
+ dftemp$se1result<- paste("SE1",dftemp$se1result, sep = "")
+ dftemp$se1result<-as.factor(dftemp$se1result)
+ dftemp$se2result<- paste("SE2",dftemp$se2result, sep = "")
+ dftemp$se2result<-as.factor(dftemp$se2result)
+ dftemptable<-table(dftemp$se1result, dftemp$se2result)
+ test<-chisq.test(dftemptable)
+ pval<-test$p.value
+p<- ggplot(dftemp) +
+  aes(x = se1result, fill = se2result) +
+  geom_bar(position = "fill")+
+  theme_classic()+
+  scale_fill_manual(values = c("dodgerblue4", "mediumorchid4"))+
+  ggtitle(paste("winner vs loser only (no tie) day 2 p value= ", round(pval, 4)))
+ plot(p) 
+ 
+ 
+ 
+  dftemp<-dffull %>% select(se1result, se3result, name)
+ dftemp[dftemp$se1result == "tie",]$se1result<-NA
+ dftemp[dftemp$se3result == "tie",]$se3result<-NA
+ dftemp<-na.omit(dftemp)
+ dftemp$se1result<- paste("SE1",dftemp$se1result, sep = "")
+ dftemp$se1result<-as.factor(dftemp$se1result)
+ dftemp$se3result<- paste("SE3",dftemp$se3result, sep = "")
+ dftemp$se3result<-as.factor(dftemp$se3result)
+ dftemptable<-table(dftemp$se1result, dftemp$se3result)
+ test<-chisq.test(dftemptable)
+ pval<-test$p.value
+p<- ggplot(dftemp) +
+  aes(x = se1result, fill = se3result) +
+  geom_bar(position = "fill")+
+  theme_classic()+
+  scale_fill_manual(values = c("dodgerblue4", "mediumorchid4"))+
+  ggtitle(paste("winner vs loser only (no tie) day 3 p value= ", round(pval, 4)))
+ plot(p) 
+ 
+ 
+ 
+  dftemp<-dffull %>% select(se1result, se4result, name)
+ dftemp[dftemp$se1result == "tie",]$se1result<-NA
+ dftemp[dftemp$se4result == "tie",]$se4result<-NA
+ dftemp<-na.omit(dftemp)
+ dftemp$se1result<- paste("SE1",dftemp$se1result, sep = "")
+ dftemp$se1result<-as.factor(dftemp$se1result)
+ dftemp$se4result<- paste("SE4",dftemp$se4result, sep = "")
+ dftemp$se4result<-as.factor(dftemp$se4result)
+ dftemptable<-table(dftemp$se1result, dftemp$se4result)
+ test<-chisq.test(dftemptable)
+ pval<-test$p.value
+p<- ggplot(dftemp) +
+  aes(x = se1result, fill = se4result) +
+  geom_bar(position = "fill")+
+  theme_classic()+
+  scale_fill_manual(values = c("dodgerblue4", "mediumorchid4"))+
+  ggtitle(paste("winner vs loser only (no tie) day 4 p value= ", round(pval, 4)))
+ plot(p) 
+ 
+ 
+ 
+ #DAY 4 v 5 familiar only
+  dftemp<-dffull %>% select(se4result, se5result, name, treatment)
+  dftemp<-dftemp %>% filter(treatment == "familiar")
+ dftemp[dftemp$se4result == "tie",]$se4result<-NA
+ dftemp[dftemp$se5result == "tie",]$se5result<-NA
+ dftemp<-na.omit(dftemp)
+ dftemp$se4result<- paste("SE4",dftemp$se4result, sep = "")
+ dftemp$se4result<-as.factor(dftemp$se4result)
+ dftemp$se5result<- paste("SE5",dftemp$se5result, sep = "")
+ dftemp$se5result<-as.factor(dftemp$se5result)
+ dftemptable<-table(dftemp$se4result, dftemp$se5result)
+ test<-chisq.test(dftemptable)
+ pval<-test$p.value
+p<- ggplot(dftemp) +
+  aes(x = se4result, fill = se5result) +
+  geom_bar(position = "fill")+
+  theme_classic()+
+  scale_fill_manual(values = c("firebrick4", "darkgoldenrod4"))+
+  ggtitle(paste("winner vs loser only familiar (no tie) day 5 p value= ", round(pval, 5)))
+ plot(p) 
+ 
+ #DAY 5 novel
+  dftemp<-dffull %>% select(se4result, se5result, name, treatment)
+  dftemp<-dftemp %>% filter(treatment == "novel")
+ dftemp[dftemp$se4result == "tie",]$se4result<-NA
+ dftemp[dftemp$se5result == "tie",]$se5result<-NA
+ dftemp<-na.omit(dftemp)
+ dftemp$se4result<- paste("SE4",dftemp$se4result, sep = "")
+ dftemp$se4result<-as.factor(dftemp$se4result)
+ dftemp$se5result<- paste("SE5",dftemp$se5result, sep = "")
+ dftemp$se5result<-as.factor(dftemp$se5result)
+ dftemptable<-table(dftemp$se4result, dftemp$se5result)
+ test<-chisq.test(dftemptable)
+ pval<-test$p.value
+p<- ggplot(dftemp) +
+  aes(x = se4result, fill = se5result) +
+  geom_bar(position = "fill")+
+  theme_classic()+
+  scale_fill_manual(values = c("dodgerblue4", "mediumorchid4"))+
+  ggtitle(paste("winner vs loser only novel (no tie) day 5 p value= ", round(pval, 5)))
+ plot(p) 
+ 
+ 
+ 
+wintemp <- dffull %>% select(name, se1result, se2result, se3result, se4result, se5result)
+
+
+
+#chi squared effect size calculated by hand
+sqrt((10.286*10.286)/24)
+
+sqrt((6.4*6.4)/24)
+
+sqrt((4.5*4.5)/24)
+ 
+```
+
+#do familiar and novel treatments differ in SE5 behavior? no
+```{r}
+
+ #NA familiar vs novel comparison
+ dftemp<-dffull %>% select(treatment, n_a_prop_SE5)
+ dftemp<-na.omit(dftemp)
+ dftemp$treatment<-as.factor(dftemp$treatment)
+ shapiro.test(dftemp$n_a_prop_SE5) #if shapiro is NOT significant you can use t test
+ test<-wilcox.test(n_a_prop_SE5~treatment, data = dftemp)
+ pval<-test$p.value
+dftemp<-dffull %>% select(treatment, n_a_prop_SE5)
+p<- ggplot(dftemp, aes(x=treatment, y=n_a_prop_SE5)) +
+    geom_boxplot(lwd=1, fill = c("darkgoldenrod3", "darkred"))+
+    geom_dotplot(binaxis='y', stackdir='center', dotsize=1)+
+   theme_classic()+
+  ggtitle(paste("familiar vs novel p value= ", round(pval, 4)))+
+   labs(x= "treatment",y="n_a_prop_SE5") + theme(axis.text.y = element_text(size = 14)) + theme(axis.text.x = element_text(size = 14)) +    stat_n_text()
+ plot(p)
+ 
+
+ #gill cover display familiar vs novel comparison
+ dftemp<-dffull %>% select(treatment, gill_covered_display_seconds_SE5)
+ dftemp<-na.omit(dftemp)
+ dftemp$treatment<-as.factor(dftemp$treatment)
+ shapiro.test(dftemp$gill_covered_display_seconds_SE5) #if shapiro is NOT significant you can use t test
+ test<-wilcox.test(gill_covered_display_seconds_SE5~treatment, data = dftemp)
+ pval<-test$p.value
+dftemp<-dffull %>% select(treatment, gill_covered_display_prop_SE5)
+p<- ggplot(dftemp, aes(x=treatment, y=gill_covered_display_prop_SE5)) +
+    geom_boxplot(lwd=1, fill = c("darkgoldenrod3", "darkred"))+
+    geom_dotplot(binaxis='y', stackdir='center', dotsize=1)+
+   theme_classic()+
+  ggtitle(paste("familiar vs novel p value= ", round(pval, 4)))+
+   labs(x= "treatment",y="gill_covered_display_prop_SE5") + theme(axis.text.y = element_text(size = 14)) + theme(axis.text.x = element_text(size = 14)) +    stat_n_text()
+ plot(p)
+ 
+#ramming biting familiar vs novel comparison
+ dftemp<-dffull %>% select(treatment, ramming_biting_prop_SE5)
+ dftemp<-na.omit(dftemp)
+ dftemp$treatment<-as.factor(dftemp$treatment)
+ shapiro.test(dftemp$ramming_biting_prop_SE5) #if shapiro is NOT significant you can use t test
+ test<-wilcox.test(ramming_biting_prop_SE5~treatment, data = dftemp)
+ pval<-test$p.value
+dftemp<-dffull %>% select(treatment, ramming_biting_prop_SE5)
+p<- ggplot(dftemp, aes(x=treatment, y=ramming_biting_prop_SE5)) +
+    geom_boxplot(lwd=1, fill = c("darkgoldenrod3", "darkred"))+
+    geom_dotplot(binaxis='y', stackdir='center', dotsize=1)+
+   theme_classic()+
+  ggtitle(paste("familiar vs novel p value= ", round(pval, 4)))+
+   labs(x= "treatment",y="ramming_biting_prop_SE5") + theme(axis.text.y = element_text(size = 14)) + theme(axis.text.x = element_text(size = 14)) +    stat_n_text()
+ plot(p)
+ 
+#tail beat familiar vs novel comparison
+ dftemp<-dffull %>% select(treatment, tail_beat_prop_SE5)
+ dftemp<-na.omit(dftemp)
+ dftemp$treatment<-as.factor(dftemp$treatment)
+ shapiro.test(dftemp$tail_beat_prop_SE5) #if shapiro is NOT significant you can use t test
+ test<-wilcox.test(tail_beat_prop_SE5~treatment, data = dftemp)
+ pval<-test$p.value
+dftemp<-dffull %>% select(treatment, tail_beat_prop_SE5)
+p<- ggplot(dftemp, aes(x=treatment, y=tail_beat_prop_SE5)) +
+    geom_boxplot(lwd=1, fill = c("darkgoldenrod3", "darkred"))+
+    geom_dotplot(binaxis='y', stackdir='center', dotsize=1)+
+   theme_classic()+
+  ggtitle(paste("familiar vs novel p value= ", round(pval, 4)))+
+   labs(x= "treatment",y="tail_beat_prop_SE5") + theme(axis.text.y = element_text(size = 14)) + theme(axis.text.x = element_text(size = 14)) +    stat_n_text()
+ plot(p) 
+ 
+ 
+ 
+ #lateral swimming familiar vs novel comparison
+ dftemp<-dffull %>% select(treatment, lateral_swimming_prop_SE5)
+ dftemp<-na.omit(dftemp)
+ dftemp$treatment<-as.factor(dftemp$treatment)
+ shapiro.test(dftemp$lateral_swimming_prop_SE5) #if shapiro is NOT significant you can use t test
+ test<-wilcox.test(lateral_swimming_prop_SE5~treatment, data = dftemp)
+ pval<-test$p.value
+dftemp<-dffull %>% select(treatment, lateral_swimming_prop_SE5)
+p<- ggplot(dftemp, aes(x=treatment, y=lateral_swimming_prop_SE5)) +
+    geom_boxplot(lwd=1, fill = c("darkgoldenrod3", "darkred"))+
+    geom_dotplot(binaxis='y', stackdir='center', dotsize=1)+
+   theme_classic()+
+  ggtitle(paste("familiar vs novel p value= ", round(pval, 4)))+
+   labs(x= "treatment",y="lateral_swimming_prop_SE5") + theme(axis.text.y = element_text(size = 14)) + theme(axis.text.x = element_text(size = 14)) +    stat_n_text()
+ plot(p) 
+ 
+ 
+  #surface breathing familiar vs novel comparison
+ dftemp<-dffull %>% select(treatment, surface_breathing_prop_SE5)
+ dftemp<-na.omit(dftemp)
+ dftemp$treatment<-as.factor(dftemp$treatment)
+ shapiro.test(dftemp$surface_breathing_prop_SE5) #if shapiro is NOT significant you can use t test
+ test<-wilcox.test(surface_breathing_prop_SE5~treatment, data = dftemp)
+ pval<-test$p.value
+  wilcoxeffsize<- dftemp %>% wilcox_effsize(surface_breathing_prop_SE5 ~ treatment)
+ print(wilcoxeffsize)
+dftemp<-dffull %>% select(treatment, surface_breathing_prop_SE5)
+p<- ggplot(dftemp, aes(x=treatment, y=surface_breathing_prop_SE5)) +
+    geom_boxplot(lwd=1, fill = c("darkgoldenrod3", "darkred"))+
+    geom_dotplot(binaxis='y', stackdir='center', dotsize=1)+
+   theme_classic()+
+  ggtitle(paste("familiar vs novel p value= ", round(pval, 4)))+
+   labs(x= "treatment",y="surface_breathing_prop_SE5") + theme(axis.text.y = element_text(size = 14)) + theme(axis.text.x = element_text(size = 14)) +    stat_n_text()
+ plot(p) 
+ 
+ 
+ #########NOW adding four groups, fam winner, nov winners, fam losers, nov losers
+  #########
+  #########
+#  
+#  #NA familiar vs novel comparison
+#  dftemp<-dffull %>% select(treatment, n_a_prop_SE5, se5result)
+#  dftemp[dftemp$se5result == "tie",]$se5result<-NA
+#  dftemp<-na.omit(dftemp)
+#  dftemp$restreat<- paste0(dftemp$treatment, dftemp$se5result)
+#  dftemp$treatment<-as.factor(dftemp$restreat)
+#  test<-aov(n_a_prop_SE5 ~ treatment,
+#   data = dftemp)
+#  summary(test)
+#  pval<-summary(test)[[1]][["Pr(>F)"]][[1]]
+# p<- ggplot(dftemp, aes(x=treatment, y=n_a_prop_SE5)) +
+#     geom_boxplot(lwd=1, fill = c("darkgoldenrod3", "darkred", "darkgoldenrod1", "red3"))+
+#     geom_dotplot(binaxis='y', stackdir='center', dotsize=1)+
+#    theme_classic()+
+#   ggtitle(paste("familiar vs novel and result p value= ", round(pval, 4)))+
+#    labs(x= "treatment",y="n_a_prop_SE5") + theme(axis.text.y = element_text(size = 14)) + theme(axis.text.x = element_text(size = 14)) +    stat_n_text()
+#  plot(p)
+#  
+# 
+#  #gill cover display familiar vs novel comparison
+#  dftemp<-dffull %>% select(treatment, gill_covered_display_prop_SE5, se5result)
+#  dftemp[dftemp$se5result == "tie",]$se5result<-NA
+#  dftemp<-na.omit(dftemp)
+#  dftemp$restreat<- paste0(dftemp$treatment, dftemp$se5result)
+#  dftemp$treatment<-as.factor(dftemp$restreat)
+#  test<-aov(gill_covered_display_prop_SE5 ~ treatment,
+#   data = dftemp)
+#  summary(test)
+#  pval<-summary(test)[[1]][["Pr(>F)"]][[1]]
+# p<- ggplot(dftemp, aes(x=treatment, y=gill_covered_display_prop_SE5)) +
+#     geom_boxplot(lwd=1, fill = c("darkgoldenrod3", "darkred", "darkgoldenrod1", "red3"))+
+#     geom_dotplot(binaxis='y', stackdir='center', dotsize=1)+
+#    theme_classic()+
+#   ggtitle(paste("familiar vs novel and result  p value= ", round(pval, 4)))+
+#    labs(x= "treatment",y="gill_covered_display_prop_SE5") + theme(axis.text.y = element_text(size = 14)) + theme(axis.text.x = element_text(size = 14)) +    stat_n_text()
+#  plot(p)
+#  
+# #ramming biting familiar vs novel comparison
+#  dftemp<-dffull %>% select(treatment, ramming_biting_prop_SE5, se5result)
+#  dftemp[dftemp$se5result == "tie",]$se5result<-NA
+#  dftemp<-na.omit(dftemp)
+#  dftemp$restreat<- paste0(dftemp$treatment, dftemp$se5result)
+#  dftemp$treatment<-as.factor(dftemp$restreat)
+#  test<-aov(ramming_biting_prop_SE5 ~ treatment,
+#   data = dftemp)
+#  summary(test)
+#  pval<-summary(test)[[1]][["Pr(>F)"]][[1]]
+# p<- ggplot(dftemp, aes(x=treatment, y=ramming_biting_prop_SE5)) +
+#     geom_boxplot(lwd=1, fill = c("darkgoldenrod3", "darkred", "darkgoldenrod1", "red3"))+
+#     geom_dotplot(binaxis='y', stackdir='center', dotsize=1)+
+#    theme_classic()+
+#   ggtitle(paste("familiar vs novel and result  p value= ", round(pval, 4)))+
+#    labs(x= "treatment",y="ramming_biting_prop_SE5") + theme(axis.text.y = element_text(size = 14)) + theme(axis.text.x = element_text(size = 14)) +    stat_n_text()
+#  plot(p)
+#  
+# #tail beat familiar vs novel comparison
+#  dftemp<-dffull %>% select(treatment, tail_beat_prop_SE5, se5result)
+#  dftemp[dftemp$se5result == "tie",]$se5result<-NA
+#  dftemp<-na.omit(dftemp)
+#  dftemp$restreat<- paste0(dftemp$treatment, dftemp$se5result)
+#  dftemp$treatment<-as.factor(dftemp$restreat)
+#  test<-aov(tail_beat_prop_SE5 ~ treatment,
+#   data = dftemp)
+#  summary(test)
+#  pval<-summary(test)[[1]][["Pr(>F)"]][[1]]
+# p<- ggplot(dftemp, aes(x=treatment, y=tail_beat_prop_SE5)) +
+#     geom_boxplot(lwd=1, fill = c("darkgoldenrod3", "darkred", "darkgoldenrod1", "red3"))+
+#     geom_dotplot(binaxis='y', stackdir='center', dotsize=1)+
+#    theme_classic()+
+#   ggtitle(paste("familiar vs novel and result  p value= ", round(pval, 4)))+
+#    labs(x= "treatment",y="tail_beat_prop_SE5") + theme(axis.text.y = element_text(size = 14)) + theme(axis.text.x = element_text(size = 14)) +    stat_n_text()
+#  plot(p) 
+#  
+#  
+#  
+#  #lateral swimming familiar vs novel comparison
+#  dftemp<-dffull %>% select(treatment, lateral_swimming_prop_SE5, se5result)
+#  dftemp[dftemp$se5result == "tie",]$se5result<-NA
+#  dftemp<-na.omit(dftemp)
+#  dftemp$restreat<- paste0(dftemp$treatment, dftemp$se5result)
+#  dftemp$treatment<-as.factor(dftemp$restreat)
+#  test<-aov(lateral_swimming_prop_SE5 ~ treatment,
+#   data = dftemp)
+#  summary(test)
+#  pval<-summary(test)[[1]][["Pr(>F)"]][[1]]
+# p<- ggplot(dftemp, aes(x=treatment, y=lateral_swimming_prop_SE5)) +
+#     geom_boxplot(lwd=1, fill = c("darkgoldenrod3", "darkred", "darkgoldenrod1", "red3"))+
+#     geom_dotplot(binaxis='y', stackdir='center', dotsize=1)+
+#    theme_classic()+
+#   ggtitle(paste("familiar vs novel and result  p value= ", round(pval, 4)))+
+#    labs(x= "treatment",y="lateral_swimming_prop_SE5") + theme(axis.text.y = element_text(size = 14)) + theme(axis.text.x = element_text(size = 14)) +    stat_n_text()
+#  plot(p) 
+
+
+
+```
+
+#do familiar and novel treatments differ in neural activity? no
+```{r}
+
+ shapiro.test(dffull$mean_dm3) #if shapiro is NOT significant you can use t test
+ test<-t.test(mean_dm3~treatment, data = dffull)
+ pval<-test$p.value
+ teffsize<- dffull %>% cohens_d(mean_dm3 ~ treatment)
+ print(teffsize)
+dftemp<-dffull %>% select(treatment, mean_dm3)
+p<- ggplot(dftemp, aes(x=treatment, y=mean_dm3)) +
+    geom_boxplot(lwd=1, fill = c("darkgoldenrod3", "darkred"))+
+    geom_dotplot(binaxis='y', stackdir='center', dotsize=1)+
+   theme_classic()+
+  ggtitle(paste("fam vs novel p value= ", round(pval, 4)))+
+   labs(x= "treatment",y="dm3 neural activity") + theme(axis.text.y = element_text(size = 14)) + theme(axis.text.x = element_text(size = 14)) +    stat_n_text()
+ plot(p)
+ 
+ 
+ shapiro.test(dffull$mean_dlv1) #if shapiro is NOT significant you can use t test
+ test<-t.test(mean_dlv1~treatment, data = dffull)
+ pval<-test$p.value
+ teffsize<- dffull %>% cohens_d(mean_dlv1 ~ treatment)
+ print(teffsize)
+dftemp<-dffull %>% select(treatment, mean_dlv1)
+p<- ggplot(dftemp, aes(x=treatment, y=mean_dlv1)) +
+    geom_boxplot(lwd=1, fill = c("darkgoldenrod3", "darkred"))+
+    geom_dotplot(binaxis='y', stackdir='center', dotsize=1)+
+   theme_classic()+
+  ggtitle(paste("fam vs novel p value= ", round(pval, 4)))+
+   labs(x= "treatment",y="dlv1 neural activity") + theme(axis.text.y = element_text(size = 14)) + theme(axis.text.x = element_text(size = 14)) +    stat_n_text()
+ plot(p)
+ 
+ 
+  shapiro.test(dffull$mean_vv) #if shapiro is NOT significant you can use t test
+ test<-t.test(mean_vv~treatment, data = dffull)
+ pval<-test$p.value
+ teffsize<- dffull %>% cohens_d(mean_vv ~ treatment)
+ print(teffsize)
+dftemp<-dffull %>% select(treatment, mean_vv)
+p<- ggplot(dftemp, aes(x=treatment, y=mean_vv)) +
+    geom_boxplot(lwd=1, fill = c("darkgoldenrod3", "darkred"))+
+    geom_dotplot(binaxis='y', stackdir='center', dotsize=1)+
+   theme_classic()+
+  ggtitle(paste("fam vs novel p value= ", round(pval, 4)))+
+   labs(x= "treatment",y="vv neural activity") + theme(axis.text.y = element_text(size = 14)) + theme(axis.text.x = element_text(size = 14)) +    stat_n_text()
+ plot(p)
+ 
+ 
+```
+ 
+#specific comparisons between SE5  behavior and neural activity
+```{r}
+complist<-c("mean_dm3", "mean_dlv1", "mean_vv", "n_a_prop_SE5","surface_breathing_prop_SE5","gill_covered_display_prop_SE5","lateral_swimming_prop_SE5","ramming_biting_prop_SE5","tail_beat_prop_SE5")
+
+i<-1
+j<-1
+
+for (i in 1:length(complist)) {
+      for (j in 1:length(complist)) {
+        if(j != i){
+        measure1 <- complist[i]
+        measure2 <- complist[j]
+        temp <- dffull %>% select(complist[i], complist[j])
+
+            colnames(temp) <- c("measure1", "measure2")
+            temp$measure1 <- as.character(temp$measure1)
+            temp <- temp[temp$measure1 != "Inf", ]
+            temp$measure1 <- as.numeric(as.character(temp$measure1))
+            temp$measure2 <- as.character(temp$measure2)
+            temp <- temp[temp$measure2 != "Inf", ]
+            temp$measure2 <- as.numeric(as.character(temp$measure2))
+            mod <- lm(temp$measure2 ~ temp$measure1)
+            p_value <- summary(mod)$coefficients[8]
+            print(paste(measure1, measure2, "p value = ", 
+              round(p_value, 4)))
+
+     p <- ggplot(temp, aes(measure1, measure2)) + 
+     geom_point(size = 4) + geom_smooth(method = "lm", 
+     se = FALSE, colour = "black") + theme(text = element_text(size = 10)) + 
+     labs(x = measure1, y = measure2) + theme_classic() + 
+     annotate(geom = "text", label = paste("p value = ", 
+     round(p_value, 4)), x = -Inf, y = Inf, 
+     hjust = 0, vjust = 1)
+     plot(p)}}}
+
+```
+
+#To get the graphs of behavior over time (e.g. 3 second intervals) you must first run this to adjust the cowlog data function clseries to be 50 segments instead of 10!
+```{r}
+tempclseries50<-function (pathtofile, zonename, seglength, factor, factorindex, 
+         factorname) 
+{
+  file_list <- list.files(path = pathtofile, pattern = "*.csv")
+  zones <- zonename
+  segment_length <- seglength
+  seriesdata <- as.data.frame(matrix(0, ncol = (length(zones) * 
+                                                  50) + 1, nrow = length(file_list)))
+  i <- 1
+  j <- 1
+  listnames <- "filename"
+  for (j in 1:length(zones)) {
+    for (i in 1:50) {
+      listnames <- append(listnames, paste("segment", 
+                                           i, "-", zones[j], sep = ""))
+    }
+  }
+  colnames(seriesdata) <- listnames
+  i <- 1
+  for (i in 1:length(file_list)) {
+    file <- read.csv(paste(pathtofile, file_list[i], sep = "/"))
+    filename <- file_list[i]
+    seriesdata$filename[i] <- filename
+    file <- as.data.frame(file)
+    stamp1 <- file$time[1]
+    stamp2 <- file$time[1] + segment_length
+    stamp3 <- file$time[1] + (segment_length * 2)
+    stamp4 <- file$time[1] + (segment_length * 3)
+    stamp5 <- file$time[1] + (segment_length * 4)
+    stamp6 <- file$time[1] + (segment_length * 5)
+    stamp7 <- file$time[1] + (segment_length * 6)
+    stamp8 <- file$time[1] + (segment_length * 7)
+    stamp9 <- file$time[1] + (segment_length * 8)
+    stamp10 <- file$time[1] + (segment_length * 9)
+    stamp11 <- file$time[1] + (segment_length * 10)
+    
+    stamp12 <- file$time[1] + (segment_length * 11)
+    stamp13 <- file$time[1] + (segment_length * 12)
+    stamp14 <- file$time[1] + (segment_length * 13)
+    stamp15 <- file$time[1] + (segment_length * 14)
+    stamp16 <- file$time[1] + (segment_length * 15)
+    stamp17 <- file$time[1] + (segment_length * 16)
+    stamp18 <- file$time[1] + (segment_length * 17)
+    stamp19 <- file$time[1] + (segment_length * 18)
+    stamp20 <- file$time[1] + (segment_length * 19)
+    stamp21 <- file$time[1] + (segment_length * 20)
+
+    stamp22 <- file$time[1] + (segment_length * 21)
+    stamp23 <- file$time[1] + (segment_length * 22)
+    stamp24 <- file$time[1] + (segment_length * 23)
+    stamp25 <- file$time[1] + (segment_length * 24)
+    stamp26 <- file$time[1] + (segment_length * 25)
+    stamp27 <- file$time[1] + (segment_length * 26)
+    stamp28 <- file$time[1] + (segment_length * 27)
+    stamp29 <- file$time[1] + (segment_length * 28)
+    stamp30 <- file$time[1] + (segment_length * 29)
+    stamp31 <- file$time[1] + (segment_length * 30)
+    
+    stamp32 <- file$time[1] + (segment_length * 31)
+    stamp33 <- file$time[1] + (segment_length * 32)
+    stamp34 <- file$time[1] + (segment_length * 33)
+    stamp35 <- file$time[1] + (segment_length * 34)
+    stamp36 <- file$time[1] + (segment_length * 35)
+    stamp37 <- file$time[1] + (segment_length * 36)
+    stamp38 <- file$time[1] + (segment_length * 37)
+    stamp39 <- file$time[1] + (segment_length * 38)
+    stamp40 <- file$time[1] + (segment_length * 39)
+    stamp41 <- file$time[1] + (segment_length * 40)
+    
+    
+    stamp42 <- file$time[1] + (segment_length * 41)
+    stamp43 <- file$time[1] + (segment_length * 42)
+    stamp44 <- file$time[1] + (segment_length * 43)
+    stamp45 <- file$time[1] + (segment_length * 44)
+    stamp46 <- file$time[1] + (segment_length * 45)
+    stamp47 <- file$time[1] + (segment_length * 46)
+    stamp48 <- file$time[1] + (segment_length * 47)
+    stamp49 <- file$time[1] + (segment_length * 48)
+    stamp50 <- file$time[1] + (segment_length * 49)
+    stamp51 <- file$time[1] + (segment_length * 50)
+    
+    
+    
+    segment1 <- file[2:max(which(file$time < stamp2)), ]
+    segment2 <- file[(which(file$time > stamp2) - 1):max(which(file$time < stamp3)), ]
+    segment3 <- file[(which(file$time > stamp3) - 1):max(which(file$time < stamp4)), ]
+    segment4 <- file[(which(file$time > stamp4) - 1):max(which(file$time < stamp5)), ]
+    segment5 <- file[(which(file$time > stamp5) - 1):max(which(file$time < stamp6)), ]
+    segment6 <- file[(which(file$time > stamp6) - 1):max(which(file$time < stamp7)), ]
+    segment7 <- file[(which(file$time > stamp7) - 1):max(which(file$time < stamp8)), ]
+    segment8 <- file[(which(file$time > stamp8) - 1):max(which(file$time < stamp9)), ]
+    segment9 <- file[(which(file$time > stamp9) - 1):max(which(file$time < stamp10)), ]
+    segment10 <- file[(which(file$time > stamp10) - 1):max(which(file$time <  stamp11)), ]
+    
+    segment11 <- file[(which(file$time > stamp11) - 1):max(which(file$time <  stamp12)), ]
+    segment12 <- file[(which(file$time > stamp12) - 1):max(which(file$time < stamp13)), ]
+    segment13 <- file[(which(file$time > stamp13) - 1):max(which(file$time < stamp14)), ]
+    segment14 <- file[(which(file$time > stamp14) - 1):max(which(file$time < stamp15)), ]
+    segment15 <- file[(which(file$time > stamp15) - 1):max(which(file$time < stamp16)), ]
+    segment16 <- file[(which(file$time > stamp16) - 1):max(which(file$time < stamp17)), ]
+    segment17 <- file[(which(file$time > stamp17) - 1):max(which(file$time < stamp18)), ]
+    segment18 <- file[(which(file$time > stamp18) - 1):max(which(file$time < stamp19)), ]
+    segment19 <- file[(which(file$time > stamp19) - 1):max(which(file$time < stamp20)), ]
+    segment20 <- file[(which(file$time > stamp20) - 1):max(which(file$time <  stamp21)), ]
+    
+    segment21 <- file[(which(file$time > stamp21) - 1):max(which(file$time <  stamp22)), ]
+    segment22 <- file[(which(file$time > stamp22) - 1):max(which(file$time < stamp23)), ]
+    segment23 <- file[(which(file$time > stamp23) - 1):max(which(file$time < stamp24)), ]
+    segment24 <- file[(which(file$time > stamp24) - 1):max(which(file$time < stamp25)), ]
+    segment25 <- file[(which(file$time > stamp25) - 1):max(which(file$time < stamp26)), ]
+    segment26 <- file[(which(file$time > stamp26) - 1):max(which(file$time < stamp27)), ]
+    segment27 <- file[(which(file$time > stamp27) - 1):max(which(file$time < stamp28)), ]
+    segment28 <- file[(which(file$time > stamp28) - 1):max(which(file$time < stamp29)), ]
+    segment29 <- file[(which(file$time > stamp29) - 1):max(which(file$time < stamp30)), ]
+    segment30 <- file[(which(file$time > stamp30) - 1):max(which(file$time <  stamp31)), ]
+    
+    segment31 <- file[(which(file$time > stamp31) - 1):max(which(file$time <  stamp32)), ]
+    segment32 <- file[(which(file$time > stamp32) - 1):max(which(file$time < stamp33)), ]
+    segment33 <- file[(which(file$time > stamp33) - 1):max(which(file$time < stamp34)), ]
+    segment34 <- file[(which(file$time > stamp34) - 1):max(which(file$time < stamp35)), ]
+    segment35 <- file[(which(file$time > stamp35) - 1):max(which(file$time < stamp36)), ]
+    segment36 <- file[(which(file$time > stamp36) - 1):max(which(file$time < stamp37)), ]
+    segment37 <- file[(which(file$time > stamp37) - 1):max(which(file$time < stamp38)), ]
+    segment38 <- file[(which(file$time > stamp38) - 1):max(which(file$time < stamp39)), ]
+    segment39 <- file[(which(file$time > stamp39) - 1):max(which(file$time < stamp40)), ]
+    segment40 <- file[(which(file$time > stamp40) - 1):max(which(file$time <  stamp41)), ]
+    
+    segment41 <- file[(which(file$time > stamp41) - 1):max(which(file$time <  stamp42)), ]
+    segment42 <- file[(which(file$time > stamp42) - 1):max(which(file$time < stamp43)), ]
+    segment43 <- file[(which(file$time > stamp43) - 1):max(which(file$time < stamp44)), ]
+    segment44 <- file[(which(file$time > stamp44) - 1):max(which(file$time < stamp45)), ]
+    segment45 <- file[(which(file$time > stamp45) - 1):max(which(file$time < stamp46)), ]
+    segment46 <- file[(which(file$time > stamp46) - 1):max(which(file$time < stamp47)), ]
+    segment47 <- file[(which(file$time > stamp47) - 1):max(which(file$time < stamp48)), ]
+    segment48 <- file[(which(file$time > stamp48) - 1):max(which(file$time < stamp49)), ]
+    segment49 <- file[(which(file$time > stamp49) - 1):max(which(file$time < stamp50)), ]
+    segment50 <- file[(which(file$time > stamp50) - 1):max(which(file$time <  stamp51)), ]
+    
+    segment1$time[1] <- stamp1
+    segment2$time[1] <- stamp2
+    segment3$time[1] <- stamp3
+    segment4$time[1] <- stamp4
+    segment5$time[1] <- stamp5
+    segment6$time[1] <- stamp6
+    segment7$time[1] <- stamp7
+    segment8$time[1] <- stamp8
+    segment9$time[1] <- stamp9
+    segment10$time[1] <- stamp10
+    
+    segment11$time[1] <- stamp11
+    segment12$time[1] <- stamp12
+    segment13$time[1] <- stamp13
+    segment14$time[1] <- stamp14
+    segment15$time[1] <- stamp15
+    segment16$time[1] <- stamp16
+    segment17$time[1] <- stamp17
+    segment18$time[1] <- stamp18
+    segment19$time[1] <- stamp19
+    segment20$time[1] <- stamp20
+    
+    segment21$time[1] <- stamp21
+    segment22$time[1] <- stamp22
+    segment23$time[1] <- stamp23
+    segment24$time[1] <- stamp24
+    segment25$time[1] <- stamp25
+    segment26$time[1] <- stamp26
+    segment27$time[1] <- stamp27
+    segment28$time[1] <- stamp28
+    segment29$time[1] <- stamp29
+    segment30$time[1] <- stamp30
+    
+    segment31$time[1] <- stamp31
+    segment32$time[1] <- stamp32
+    segment33$time[1] <- stamp33
+    segment34$time[1] <- stamp34
+    segment35$time[1] <- stamp35
+    segment36$time[1] <- stamp36
+    segment37$time[1] <- stamp37
+    segment38$time[1] <- stamp38
+    segment39$time[1] <- stamp39
+    segment40$time[1] <- stamp40
+    
+    segment41$time[1] <- stamp41
+    segment42$time[1] <- stamp42
+    segment43$time[1] <- stamp43
+    segment44$time[1] <- stamp44
+    segment45$time[1] <- stamp45
+    segment46$time[1] <- stamp46
+    segment47$time[1] <- stamp47
+    segment48$time[1] <- stamp48
+    segment49$time[1] <- stamp49
+    segment50$time[1] <- stamp50
+    
+    
+
+    segment1 <- mutate(segment1, time.difference = -(time - lead(time)))
+    segment1$time.difference[nrow(segment1)] <- (segment_length + segment1$time[1]) - segment1$time[nrow(segment1)]
+    segment2 <- mutate(segment2, time.difference = -(time - lead(time)))
+    segment2$time.difference[nrow(segment2)] <- (segment_length + segment2$time[1]) - segment2$time[nrow(segment2)]
+    segment3 <- mutate(segment3, time.difference = -(time - lead(time)))
+    segment3$time.difference[nrow(segment3)] <- (segment_length + segment3$time[1]) - segment3$time[nrow(segment3)]
+    segment4 <- mutate(segment4, time.difference = -(time - lead(time)))
+    segment4$time.difference[nrow(segment4)] <- (segment_length + segment4$time[1]) - segment4$time[nrow(segment4)]
+    segment5 <- mutate(segment5, time.difference = -(time - lead(time)))
+    segment5$time.difference[nrow(segment5)] <- (segment_length + segment5$time[1]) - segment5$time[nrow(segment5)]
+    segment6 <- mutate(segment6, time.difference = -(time - lead(time)))
+    segment6$time.difference[nrow(segment6)] <- (segment_length + segment6$time[1]) - segment6$time[nrow(segment6)]
+    segment7 <- mutate(segment7, time.difference = -(time - lead(time)))
+    segment7$time.difference[nrow(segment7)] <- (segment_length + segment7$time[1]) - segment7$time[nrow(segment7)]
+    segment8 <- mutate(segment8, time.difference = -(time - lead(time)))
+    segment8$time.difference[nrow(segment8)] <- (segment_length + segment8$time[1]) - segment8$time[nrow(segment8)]
+    segment9 <- mutate(segment9, time.difference = -(time - lead(time)))
+    segment9$time.difference[nrow(segment9)] <- (segment_length + segment9$time[1]) - segment9$time[nrow(segment9)]
+    segment10 <- mutate(segment10, time.difference = -(time - lead(time)))
+    segment10$time.difference[nrow(segment10)] <- (segment_length + segment10$time[1]) - segment10$time[nrow(segment10)]
+    
+    segment11 <- mutate(segment11, time.difference = -(time - lead(time)))
+    segment11$time.difference[nrow(segment11)] <- (segment_length + segment11$time[1]) - segment11$time[nrow(segment11)]
+    segment12 <- mutate(segment12, time.difference = -(time - lead(time)))
+    segment12$time.difference[nrow(segment12)] <- (segment_length + segment12$time[1]) - segment12$time[nrow(segment12)]
+    segment13 <- mutate(segment13, time.difference = -(time - lead(time)))
+    segment13$time.difference[nrow(segment13)] <- (segment_length + segment13$time[1]) - segment13$time[nrow(segment13)]
+    segment14 <- mutate(segment14, time.difference = -(time - lead(time)))
+    segment14$time.difference[nrow(segment14)] <- (segment_length + segment14$time[1]) - segment14$time[nrow(segment14)]
+    segment15 <- mutate(segment15, time.difference = -(time - lead(time)))
+    segment15$time.difference[nrow(segment15)] <- (segment_length + segment15$time[1]) - segment15$time[nrow(segment15)]
+    segment16 <- mutate(segment16, time.difference = -(time - lead(time)))
+    segment16$time.difference[nrow(segment16)] <- (segment_length + segment16$time[1]) - segment16$time[nrow(segment16)]
+    segment17 <- mutate(segment17, time.difference = -(time - lead(time)))
+    segment17$time.difference[nrow(segment17)] <- (segment_length + segment17$time[1]) - segment17$time[nrow(segment17)]
+    segment18 <- mutate(segment18, time.difference = -(time - lead(time)))
+    segment18$time.difference[nrow(segment18)] <- (segment_length + segment18$time[1]) - segment18$time[nrow(segment18)]
+    segment19 <- mutate(segment19, time.difference = -(time - lead(time)))
+    segment19$time.difference[nrow(segment19)] <- (segment_length + segment19$time[1]) - segment19$time[nrow(segment19)]
+    segment20 <- mutate(segment20, time.difference = -(time - lead(time)))
+    segment20$time.difference[nrow(segment20)] <- (segment_length + segment20$time[1]) - segment20$time[nrow(segment20)]
+    
+    segment21 <- mutate(segment21, time.difference = -(time - lead(time)))
+    segment21$time.difference[nrow(segment21)] <- (segment_length + segment21$time[1]) - segment21$time[nrow(segment21)]
+    segment22 <- mutate(segment22, time.difference = -(time - lead(time)))
+    segment22$time.difference[nrow(segment22)] <- (segment_length + segment22$time[1]) - segment22$time[nrow(segment22)]
+    segment23 <- mutate(segment23, time.difference = -(time - lead(time)))
+    segment23$time.difference[nrow(segment23)] <- (segment_length + segment23$time[1]) - segment23$time[nrow(segment23)]
+    segment24 <- mutate(segment24, time.difference = -(time - lead(time)))
+    segment24$time.difference[nrow(segment24)] <- (segment_length + segment24$time[1]) - segment24$time[nrow(segment24)]
+    segment25 <- mutate(segment25, time.difference = -(time - lead(time)))
+    segment25$time.difference[nrow(segment25)] <- (segment_length + segment25$time[1]) - segment25$time[nrow(segment25)]
+    segment26 <- mutate(segment26, time.difference = -(time - lead(time)))
+    segment26$time.difference[nrow(segment26)] <- (segment_length + segment26$time[1]) - segment26$time[nrow(segment26)]
+    segment27 <- mutate(segment27, time.difference = -(time - lead(time)))
+    segment27$time.difference[nrow(segment27)] <- (segment_length + segment27$time[1]) - segment27$time[nrow(segment27)]
+    segment28 <- mutate(segment28, time.difference = -(time - lead(time)))
+    segment28$time.difference[nrow(segment28)] <- (segment_length + segment28$time[1]) - segment28$time[nrow(segment28)]
+    segment29 <- mutate(segment29, time.difference = -(time - lead(time)))
+    segment29$time.difference[nrow(segment29)] <- (segment_length + segment29$time[1]) - segment29$time[nrow(segment29)]
+    segment30 <- mutate(segment30, time.difference = -(time - lead(time)))
+    segment30$time.difference[nrow(segment30)] <- (segment_length + segment30$time[1]) - segment30$time[nrow(segment30)]
+    
+    segment31 <- mutate(segment31, time.difference = -(time - lead(time)))
+    segment31$time.difference[nrow(segment31)] <- (segment_length + segment31$time[1]) - segment31$time[nrow(segment31)]
+    segment32 <- mutate(segment32, time.difference = -(time - lead(time)))
+    segment32$time.difference[nrow(segment32)] <- (segment_length + segment32$time[1]) - segment32$time[nrow(segment32)]
+    segment33 <- mutate(segment33, time.difference = -(time - lead(time)))
+    segment33$time.difference[nrow(segment33)] <- (segment_length + segment33$time[1]) - segment33$time[nrow(segment33)]
+    segment34 <- mutate(segment34, time.difference = -(time - lead(time)))
+    segment34$time.difference[nrow(segment34)] <- (segment_length + segment34$time[1]) - segment34$time[nrow(segment34)]
+    segment35 <- mutate(segment35, time.difference = -(time - lead(time)))
+    segment35$time.difference[nrow(segment35)] <- (segment_length + segment35$time[1]) - segment35$time[nrow(segment35)]
+    segment36 <- mutate(segment36, time.difference = -(time - lead(time)))
+    segment36$time.difference[nrow(segment36)] <- (segment_length + segment36$time[1]) - segment36$time[nrow(segment36)]
+    segment37 <- mutate(segment37, time.difference = -(time - lead(time)))
+    segment37$time.difference[nrow(segment37)] <- (segment_length + segment37$time[1]) - segment37$time[nrow(segment37)]
+    segment38 <- mutate(segment38, time.difference = -(time - lead(time)))
+    segment38$time.difference[nrow(segment38)] <- (segment_length + segment38$time[1]) - segment38$time[nrow(segment38)]
+    segment39 <- mutate(segment39, time.difference = -(time - lead(time)))
+    segment39$time.difference[nrow(segment39)] <- (segment_length + segment39$time[1]) - segment39$time[nrow(segment39)]
+    segment40 <- mutate(segment40, time.difference = -(time - lead(time)))
+    segment40$time.difference[nrow(segment40)] <- (segment_length + segment40$time[1]) - segment40$time[nrow(segment40)]
+    
+    segment41 <- mutate(segment41, time.difference = -(time - lead(time)))
+    segment41$time.difference[nrow(segment41)] <- (segment_length + segment41$time[1]) - segment41$time[nrow(segment41)]
+    segment42 <- mutate(segment42, time.difference = -(time - lead(time)))
+    segment42$time.difference[nrow(segment42)] <- (segment_length + segment42$time[1]) - segment42$time[nrow(segment42)]
+    segment43 <- mutate(segment43, time.difference = -(time - lead(time)))
+    segment43$time.difference[nrow(segment43)] <- (segment_length + segment43$time[1]) - segment43$time[nrow(segment43)]
+    segment44 <- mutate(segment44, time.difference = -(time - lead(time)))
+    segment44$time.difference[nrow(segment44)] <- (segment_length + segment44$time[1]) - segment44$time[nrow(segment44)]
+    segment45 <- mutate(segment45, time.difference = -(time - lead(time)))
+    segment45$time.difference[nrow(segment45)] <- (segment_length + segment45$time[1]) - segment45$time[nrow(segment45)]
+    segment46 <- mutate(segment46, time.difference = -(time - lead(time)))
+    segment46$time.difference[nrow(segment46)] <- (segment_length + segment46$time[1]) - segment46$time[nrow(segment46)]
+    segment47 <- mutate(segment47, time.difference = -(time - lead(time)))
+    segment47$time.difference[nrow(segment47)] <- (segment_length + segment47$time[1]) - segment47$time[nrow(segment47)]
+    segment48 <- mutate(segment48, time.difference = -(time - lead(time)))
+    segment48$time.difference[nrow(segment48)] <- (segment_length + segment48$time[1]) - segment48$time[nrow(segment48)]
+    segment49 <- mutate(segment49, time.difference = -(time - lead(time)))
+    segment49$time.difference[nrow(segment49)] <- (segment_length + segment49$time[1]) - segment49$time[nrow(segment49)]
+    segment50 <- mutate(segment50, time.difference = -(time - lead(time)))
+    segment50$time.difference[nrow(segment50)] <- (segment_length + segment50$time[1]) - segment50$time[nrow(segment50)]
+    
+    j <- 1
+    k <- 1
+    for (j in 1:length(zones)) {
+      for (k in 1:50) {
+        seriesdata[i, paste("segment", k, "-", zones[j], 
+                            sep = "")] <- 0
+        temp <- eval(parse(text = paste("segment", k, 
+                                        sep = ""))) %>% filter(code == zones[j]) %>% 
+          select(time.difference)
+        if (nrow(temp) > 0) {
+          seriesdata[i, paste("segment", k, "-", zones[j], 
+                              sep = "")] <- temp %>% sum()/seglength
+        }
+      }
+    }
+  }
+  fullframe <- as.data.frame(matrix(0, ncol = length(zones) + 
+                                      1, nrow = 50))
+  colnames(fullframe) <- c("segment", zones)
+  fullframe$segment <- c(1:50)
+  if (factor == FALSE) {
+    i <- 1
+    for (i in 1:50) {
+      tempcollist <- paste("segment", i, "-", sep = "")
+      tempseries <- seriesdata[names(seriesdata[grep(tempcollist, 
+                                                     names(seriesdata))])]
+      list <- as.vector(tempseries %>% summarise_if(is.numeric, 
+                                                    mean))
+      list <- as.numeric(list[1:length(list)])
+      fullframe[i, c(2:length(fullframe))] <- list
+    }
+    segs <- rep(c("a1", "a2", "a3", "a4", "a5", "a6", "a7", "a8", "a9", "b10", 
+                  "b11", "b12","b13", "b14", "b15", "b16", "b17", "b18", "b19","c20",
+                  "c21", "c22","c23", "c24", "c25", "c26", "c27", "c28", "c29","d30",
+                  "d31", "d32","d33", "d34", "d35", "d36", "d37", "d38", "d39","e40",
+                  "e41", "e42","e43", "e44", "e45", "e46", "e47", "e48", "e49","f50"), length(zones))
+    i <- 1
+    zoneschart <- NA
+    for (i in 1:length(zones)) {
+      temp <- c(rep(zones[i], 50))
+      zoneschart <- append(zoneschart, temp)
+    }
+    zoneschart <- zoneschart[is.na(zoneschart) == FALSE]
+    percent <- unlist(fullframe[names(fullframe) != "segment"])
+    data <- data.frame(segs, zoneschart, percent)
+    colors <- viridis(length(zones))
+    p <- ggplot(data, aes(fill = zoneschart, y = percent, 
+                          x = segs)) + geom_bar(position = "stack", stat = "identity") + 
+      ggtitle(paste("location over time, all data\n                    seconds per segment =", 
+                    seglength)) + theme_classic() + labs(fill = "zones", 
+                                                         x = "time segment", y = "proportion of time in area") + 
+      scale_fill_manual(values = colors) + theme(axis.text.x = element_text(angle = 90, 
+                                                                            vjust = 0.5, hjust = 1))
+    plot(p)
+  }
+  if (factor == TRUE) {
+    seriesdata[factorname] <- NA
+    i <- 1
+    for (i in 1:nrow(seriesdata)) {
+      tempfactor <- file_list[i]
+      tempfactor <- str_remove(tempfactor, ".csv")
+      tempfactor <- strsplit(tempfactor, "_")[[1]][factorindex]
+      seriesdata[i, factorname] <- tempfactor
+    }
+    k <- 1
+    for (k in 1:length(unique(seriesdata[, factorname]))) {
+      tempfactorname <- unique(seriesdata[, factorname])[k]
+      seriesdatafactor <- seriesdata %>% filter(seriesdata[factorname] == 
+                                                  tempfactorname)
+      j <- 1
+      for (j in 1:50) {
+        tempcollist <- paste("segment", j, "-", sep = "")
+        tempseries <- seriesdatafactor[names(seriesdatafactor[grep(tempcollist, 
+                                                                   names(seriesdata))])]
+        list <- as.vector(tempseries %>% summarise_if(is.numeric, 
+                                                      mean))
+        list <- as.numeric(list[1:length(list)])
+        fullframe[j, c(2:length(fullframe))] <- list
+      }
+      segs <- rep(c("a1", "a2", "a3", "a4", "a5", "a6", "a7", "a8", "a9", "b10", 
+                    "b11", "b12","b13", "b14", "b15", "b16", "b17", "b18", "b19","c20",
+                    "c21", "c22","c23", "c24", "c25", "c26", "c27", "c28", "c29","d30",
+                    "d31", "d32","d33", "d34", "d35", "d36", "d37", "d38", "d39","e40",
+                    "e41", "e42","e43", "e44", "e45", "e46", "e47", "e48", "e49","f50"), length(zones))
+      i <- 1
+      zoneschart <- NA
+      for (i in 1:length(zones)) {
+        temp <- c(rep(zones[i], 50))
+        zoneschart <- append(zoneschart, temp)
+      }
+      zoneschart <- zoneschart[is.na(zoneschart) == FALSE]
+      percent <- unlist(fullframe[names(fullframe) != 
+                                    "segment"])
+      data <- data.frame(segs, zoneschart, percent)
+      colors <- viridis(length(zones))
+      p <- ggplot(data, aes(fill = zoneschart, y = percent, 
+                            x = segs)) + geom_bar(position = "stack", stat = "identity") + 
+        ggtitle(paste("location over time,", tempfactorname, 
+                      "\n                      seconds per segment =", 
+                      seglength)) + theme_classic() + labs(fill = "zones", 
+                                                           x = "time segment", y = "proportion of time in area") + 
+        scale_fill_manual(values = colors) + theme(axis.text.x = element_text(angle = 90, 
+                                                                              vjust = 0.5, hjust = 1))
+      plot(p)
+    }
+  }
+}
+
+```
+
+#Now run clseries to get temporal responses to opponent and behavior over time in the other tasks
+```{r}
+
+tempclseries50(pathtofile = "PATH TO mirror location scoresheets", zonename = mirrorzones, seglength = 10, factor = FALSE)
+
+tempclseries50(pathtofile = "PATH TO scototaxis scoresheets", zonename = scotozones, seglength = 10, factor = FALSE)
+
+tempclseries50(pathtofile = "PATH TO novel object scoresheets", zonename = novelobjectzones, seglength = 10, factor = FALSE)
+
+tempclseries50(pathtofile = "PATH TO mirror behavior scoresheets", zonename = mirrorbehavzones, seglength = 10, factor = FALSE)
+
+tempclseries50(pathtofile = "PATH TO social exposure day 1", zonename = se1zones, seglength = 10, factor = FALSE)
+
+tempclseries50(pathtofile = "PATH TO social exposure day 2", zonename = se2zones, seglength = 10, factor = FALSE)
+
+tempclseries50(pathtofile = "PATH TO social exposure day 3", zonename = se3zones, seglength = 10, factor = FALSE)
+
+tempclseries50(pathtofile = "PATH TO social exposure day 4", zonename = se4zones, seglength = 10, factor = FALSE)
+
+tempclseries50(pathtofile = "PATH TO social exposure day 5", zonename = se5zones, seglength = 10, factor = FALSE)
+
+tempclseries50(pathtofile = "PATH TO social exposure day 5", zonename = se5zones, seglength = 10, factor = TRUE, factorindex = 4, factorname = "treatment")
+
+```
+
+#cleries comparing first minute (6 bins, 10sec each) to secs 440-500 for mirror
+```{r}
+file_list <- list.files("PATH TO mirror location scoresheets", pattern = "*.csv")
+mirrorfishlist<-dffull$name
+mirrorfishlist<-as.list(mirrorfishlist)
+  seg1upper<-vector(length = length(mirrorfishlist))
+  tempframe<-as.data.frame(vector(length = length(mirrorfishlist)))
+  tempframe2<-as.data.frame(vector(length = length(mirrorfishlist)))
+  
+i<-1
+k<-1
+for(i in 1:length(file_list)){
+  setwd("PATH TO mirror location scoresheet")
+  fil <- read_csv(file_list[i], col_names = TRUE, col_types = NULL)
+  filename <- file_list[i]
+  fishid<-strsplit(filename, "_")[[1]][1]
+  segment_length<-60 #taking the first minute of the task
+  stamp1<-fil$time[1]
+  stamp2<-fil$time[1] + segment_length
+  
+  if(fishid %in% mirrorfishlist){
+  
+  segment1<-fil[1:max(which(fil$time<stamp2)),]
+  segment1$time[1]<-stamp1
+  segment1<-mutate(segment1, time.difference = -(time -lead(time)))
+  segment1$time.difference[nrow(segment1)]<- (segment_length + segment1$time[1]) - segment1$time[nrow(segment1)]
+  
+  seg1_prop_upper<- segment1 %>% filter(code == "upper") %>% pull(time.difference) %>% sum()/segment_length
+  
+  tempframe[k,1]<-fishid
+  tempframe$upper[k]<-seg1_prop_upper
+  colnames(tempframe)[1]<-"fishID"
+  k<-k+1
+  }}
+#now for the "last"" minute (aka seconds 440-500)
+
+
+i<-1
+k<-1
+for(i in 1:length(file_list)){
+  setwd("PATH TO mirror location scoresheet")
+  fil <- read_csv(file_list[i], col_names = TRUE, col_types = NULL)
+  filename <- file_list[i]
+  fishid<-strsplit(filename, "_")[[1]][1]
+  segment_length<-60 #taking the first minute of the task
+  stamp1<-fil$time[1] + 440
+  stamp2<-fil$time[1] + 440 + segment_length
+  
+  if(fishid %in% mirrorfishlist){
+  
+  segment1<-fil[min(which(fil$time>stamp1)-1):max(which(fil$time<stamp2)),]
+  segment1$time[1]<-stamp1
+  segment1<-mutate(segment1, time.difference = -(time -lead(time)))
+  segment1$time.difference[nrow(segment1)]<- (segment_length + segment1$time[1]) - segment1$time[nrow(segment1)]
+  
+  seg1_prop_upper<- segment1 %>% filter(code == "upper") %>% pull(time.difference) %>% sum()/segment_length
+  
+  tempframe2[k,1]<-fishid
+  tempframe2$upper[k]<-seg1_prop_upper
+  colnames(tempframe2)[1]<-"fishID"
+  k<-k+1
+  }}
+
+tempframe$min<-"first"
+tempframe2$min<-"last"
+
+compare<-rbind(tempframe, tempframe2)
+shapiro.test(compare$upper)
+compare$min<-as.factor(compare$min)
+
+wilcox_test<-wilcox.test(upper~min, paired = TRUE, data = compare)
+p_value_wilcox<-wilcox_test$p.value
+print("upper preference first min to min500secs")
+print (p_value_wilcox)
+ wilcoxeffsize<- compare %>% wilcox_effsize(upper~min)
+ print(wilcoxeffsize)
+
+
+p<-ggplot(compare, aes(x = min, y = upper))+ 
+  geom_boxplot(fill = "white")  +
+  theme_classic() +
+  labs(x = "minute", y = "% time away from mirror (upper)") +
+  theme(aspect.ratio = 3) +
+  ggtitle("away from mirror first vs
+          last min all fish")+
+  geom_dotplot(binaxis = "y", stackdir = "center", dotsize = 0.4)
+plot(p)
+
+
+
+
+```
+
+
